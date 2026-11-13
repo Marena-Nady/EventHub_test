@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type EventCategory =
   | 'Conference'
   | 'Concert'
@@ -6,6 +8,18 @@ export type EventCategory =
   | 'Festival';
 
 export type BookingStatus = 'confirmed' | 'cancelled';
+
+export interface CreateEventInput {
+  title: string;
+  category: EventCategory;
+  venue: string;
+  city: string;
+  eventDate: string;
+  price: number;
+  totalSeats: number;
+  description?: string;
+  imageUrl?: string;
+}
 
 export interface Event {
   id: number;
@@ -43,6 +57,64 @@ export interface Booking {
   updatedAt: string;
   event: Event;
 }
+
+const eventSchema = z.object({
+  id: z.number().int().positive(),
+  title: z.string(),
+  category: z.enum(['Conference', 'Concert', 'Sports', 'Workshop', 'Festival']),
+  venue: z.string(),
+  city: z.string(),
+  eventDate: z.string(),
+  price: z.union([z.number(), z.string()]),
+  totalSeats: z.number().int().nonnegative(),
+  availableSeats: z.number().int().nonnegative(),
+});
+
+export const bookingSchema = z.object({
+  id: z.number().int().positive(),
+  eventId: z.number().int().positive(),
+  customerName: z.string().min(2),
+  customerEmail: z.email(),
+  customerPhone: z.string().min(10),
+  quantity: z.number().int().min(1).max(10),
+  totalPrice: z.union([z.number(), z.string()]),
+  status: z.enum(['confirmed', 'cancelled']),
+  bookingRef: z.string().min(1),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1),
+  event: eventSchema,
+});
+
+export const bookingResponseSchema = z.object({
+  success: z.literal(true),
+  data: bookingSchema,
+  message: z.string().optional(),
+});
+
+export const bookingListResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.array(bookingSchema),
+  pagination: z.object({
+    total: z.number().int().nonnegative(),
+    page: z.number().int().positive(),
+    limit: z.number().int().positive(),
+    totalPages: z.number().int().nonnegative(),
+  }),
+});
+
+export const eventResponseSchema = z.object({
+  success: z.literal(true),
+  data: eventSchema,
+});
+
+export const apiErrorSchema = z.object({
+  success: z.literal(false),
+  error: z.string().min(1),
+  details: z.array(z.object({
+    field: z.string().min(1),
+    message: z.string().min(1),
+  })).optional(),
+});
 
 export interface PaginationMeta {
   total: number;
