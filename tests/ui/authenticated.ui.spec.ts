@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/test';
+import { test, expect } from '../../src/fixtures/test';
 
 test('authenticated user can browse events', async ({ authenticatedPage }) => {
   await authenticatedPage.goto('/events');

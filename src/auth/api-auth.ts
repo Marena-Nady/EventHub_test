@@ -1,6 +1,6 @@
 import type { APIRequestContext } from '@playwright/test';
 import type { TestIdentity } from '../config/environment';
-import { isAuthResponse, isMeResponse } from '../models/contracts';
+import { isAuthResponse, isMeResponse } from '../data/contracts';
 
 export interface ApiContextOptions {
   baseURL: string;

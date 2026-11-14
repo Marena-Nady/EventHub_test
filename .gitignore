@@ -7,3 +7,4 @@ test-results/
 !.env.example
 *.tsbuildinfo
 npm-debug.log*
+implementation_details.md

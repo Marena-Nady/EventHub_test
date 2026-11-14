@@ -3,7 +3,7 @@ import type {
   BookingStatus,
   CreateBookingInput,
   CreateEventInput,
-} from '../models/contracts';
+} from '../data/contracts';
 
 export interface BookingListQuery {
   eventId?: number;

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/test';
+import { test, expect } from '../../src/fixtures/test';
 
 test('authenticated API can read the user and event list', async ({
   authenticatedApi,

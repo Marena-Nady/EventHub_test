@@ -1,13 +1,14 @@
-import { test, expect, getDataId } from './fixtures/test';
-import type { ApiTestResources } from './fixtures/test';
-import type { EventHubApi } from '../src/api/eventhub-api';
-import type { CreateBookingInput } from '../src/models/contracts';
+import { test, expect } from '../../src/fixtures/test';
+import type { ApiTestResources } from '../../src/fixtures/test';
+import { getDataId } from '../../src/support/api-response';
+import type { EventHubApi } from '../../src/api/eventhub-api';
+import type { CreateBookingInput } from '../../src/data/contracts';
 import {
   apiErrorSchema,
   bookingListResponseSchema,
   bookingResponseSchema,
   eventResponseSchema,
-} from '../src/models/contracts';
+} from '../../src/data/contracts';
 
 const documentedBookingReference = /^EVT-[A-Z0-9]{6}$/;
 

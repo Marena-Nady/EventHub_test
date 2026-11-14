@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
   test as base,
   expect,
@@ -6,16 +5,16 @@ import {
   type APIResponse,
   type Page,
 } from '@playwright/test';
-import { createAuthenticatedApiContext } from '../../src/auth/api-auth';
-import { appConfig, requireTestIdentity, type TestIdentity } from '../../src/config/environment';
-import { EventHubApi } from '../../src/api/eventhub-api';
-import type { CreateEventInput } from '../../src/models/contracts';
-
-export interface CustomerData {
-  name: string;
-  email: string;
-  phone: string;
-}
+import { createAuthenticatedApiContext } from '../auth/api-auth';
+import { EventHubApi } from '../api/eventhub-api';
+import { appConfig, requireTestIdentity, type TestIdentity } from '../config/environment';
+import { createCustomerData, createEventInput, type CustomerData } from '../data/test-data';
+import type { CreateEventInput } from '../data/contracts';
+import { BookingConfirmationPage } from '../pages/booking-confirmation.page';
+import { EventDetailsPage } from '../pages/event-details.page';
+import { EventsPage } from '../pages/events.page';
+import { MyBookingsPage } from '../pages/my-bookings.page';
+import { getDataId } from '../support/api-response';
 
 export interface CreatedTestEvent {
   response: APIResponse;
@@ -35,22 +34,10 @@ interface Fixtures {
   customerData: CustomerData;
   eventHubApi: EventHubApi;
   apiTestResources: ApiTestResources;
-}
-
-export function getDataId(body: unknown): number | undefined {
-  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    return undefined;
-  }
-
-  const data = (body as Record<string, unknown>).data;
-  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    return undefined;
-  }
-
-  const id = (data as Record<string, unknown>).id;
-  return typeof id === 'number' && Number.isSafeInteger(id) && id > 0
-    ? id
-    : undefined;
+  eventsPage: EventsPage;
+  eventDetailsPage: EventDetailsPage;
+  bookingConfirmationPage: BookingConfirmationPage;
+  myBookingsPage: MyBookingsPage;
 }
 
 export const test = base.extend<Fixtures>({
@@ -84,17 +71,28 @@ export const test = base.extend<Fixtures>({
     await use(page);
   },
 
+  eventsPage: async ({ authenticatedPage }, use) => {
+    await use(new EventsPage(authenticatedPage));
+  },
+
+  eventDetailsPage: async ({ authenticatedPage }, use) => {
+    await use(new EventDetailsPage(authenticatedPage));
+  },
+
+  bookingConfirmationPage: async ({ authenticatedPage }, use) => {
+    await use(new BookingConfirmationPage(authenticatedPage));
+  },
+
+  myBookingsPage: async ({ authenticatedPage }, use) => {
+    await use(new MyBookingsPage(authenticatedPage));
+  },
+
   eventHubApi: async ({ authenticatedApi }, use) => {
     await use(new EventHubApi(authenticatedApi));
   },
 
   customerData: async ({}, use) => {
-    const id = randomUUID();
-    await use({
-      name: `EventHub QA ${id.slice(0, 8)}`,
-      email: `eventhub.qa.${id}@example.com`,
-      phone: '+15550101234',
-    });
+    await use(createCustomerData());
   },
 
   apiTestResources: async ({ eventHubApi }, use, testInfo) => {
@@ -104,18 +102,7 @@ export const test = base.extend<Fixtures>({
     try {
       await use({
         async createEvent(overrides = {}) {
-          const input: CreateEventInput = {
-            title: `EventHub API test ${randomUUID()}`,
-            category: 'Workshop',
-            venue: 'EventHub QA venue',
-            city: 'Testville',
-            eventDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-              .toISOString()
-              .slice(0, 10),
-            price: 125,
-            totalSeats: 20,
-            ...overrides,
-          };
+          const input: CreateEventInput = createEventInput(overrides);
           const response = await eventHubApi.createEvent(input);
           const body: unknown = await response.json();
           const id = getDataId(body);
