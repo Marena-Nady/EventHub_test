@@ -1,0 +1,88 @@
+name: EventHub Playwright CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Type-check and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+      WEB_BASE_URL: ${{ vars.WEB_BASE_URL || 'https://eventhub.rahulshettyacademy.com' }}
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://api.eventhub.rahulshettyacademy.com/api' }}
+      TEST_USER_EMAIL_A: ${{ secrets.TEST_USER_EMAIL_A }}
+      TEST_USER_PASSWORD_A: ${{ secrets.TEST_USER_PASSWORD_A }}
+      TEST_USER_EMAIL_B: ${{ secrets.TEST_USER_EMAIL_B }}
+      TEST_USER_PASSWORD_B: ${{ secrets.TEST_USER_PASSWORD_B }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate account secrets
+        shell: bash
+        run: |
+          if [[ -z "${TEST_USER_EMAIL_A:-}" || -z "${TEST_USER_PASSWORD_A:-}" ]]; then
+            echo "::error::Configure TEST_USER_EMAIL_A and TEST_USER_PASSWORD_A as GitHub Actions secrets."
+            exit 1
+          fi
+
+          if { [[ -n "${TEST_USER_EMAIL_B:-}" ]] && [[ -z "${TEST_USER_PASSWORD_B:-}" ]]; } ||
+             { [[ -n "${TEST_USER_PASSWORD_B:-}" ]] && [[ -z "${TEST_USER_EMAIL_B:-}" ]]; }; then
+            echo "::error::Configure both Account B secrets or leave both unset."
+            exit 1
+          fi
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Check test discovery and forbid focused tests
+        run: npm run test:list
+
+      - name: Run API and UI tests
+        run: npm test -- --workers=1
+
+      - name: Check report availability
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f playwright-report/index.html ]]; then
+            echo "Playwright generated an HTML report."
+          else
+            echo "::warning::No HTML report was generated. Review setup steps to determine whether tests started."
+          fi
+
+      - name: Upload Playwright report and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14

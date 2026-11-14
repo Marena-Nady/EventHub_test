@@ -24,7 +24,13 @@ export class MyBookingsPage {
   }
 
   bookingCard(reference: string): Locator {
-    return this.page.getByText(reference, { exact: false }).first();
+    return this.page
+      .getByText(reference, { exact: false })
+      .first()
+      .locator('..')
+      .locator('..')
+      .locator('..')
+      .locator('..');
   }
 
   bookingTitle(title: string): Locator {
@@ -35,8 +41,10 @@ export class MyBookingsPage {
     return this.page.getByText(amount, { exact: true });
   }
 
-  async cancelBooking(): Promise<void> {
-    await this.cancelBookingButtons.click();
+  async cancelBooking(reference: string): Promise<void> {
+    await this.bookingCard(reference)
+      .getByRole('button', { name: 'Cancel Booking', exact: true })
+      .click();
     await this.page
       .getByRole('dialog')
       .getByRole('button', { name: /yes.*cancel/i })

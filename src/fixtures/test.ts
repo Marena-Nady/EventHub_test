@@ -6,6 +6,7 @@ import {
   type Page,
 } from '@playwright/test';
 import { createAuthenticatedApiContext } from '../auth/api-auth';
+import { UiAuth } from '../auth/ui-auth';
 import { EventHubApi } from '../api/eventhub-api';
 import { appConfig, requireTestIdentity, type TestIdentity } from '../config/environment';
 import { createCustomerData, createEventInput, type CustomerData } from '../data/test-data';
@@ -34,6 +35,7 @@ interface Fixtures {
   customerData: CustomerData;
   eventHubApi: EventHubApi;
   apiTestResources: ApiTestResources;
+  uiAuth: UiAuth;
   eventsPage: EventsPage;
   eventDetailsPage: EventDetailsPage;
   bookingConfirmationPage: BookingConfirmationPage;
@@ -59,15 +61,12 @@ export const test = base.extend<Fixtures>({
     }
   },
 
-  authenticatedPage: async ({ page, testIdentity }, use) => {
-    await page.goto('/login');
-    await page.getByLabel('Email', { exact: true }).fill(testIdentity.email);
-    await page.getByLabel('Password', { exact: true }).fill(testIdentity.password);
-    await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Discover & Book Amazing Events' }),
-    ).toBeVisible();
+  uiAuth: async ({ page }, use) => {
+    await use(new UiAuth(page));
+  },
 
+  authenticatedPage: async ({ page, testIdentity, uiAuth }, use) => {
+    await uiAuth.signIn(testIdentity);
     await use(page);
   },
 

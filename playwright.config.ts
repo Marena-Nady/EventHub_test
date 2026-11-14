@@ -13,18 +13,18 @@ export default defineConfig({
   ],
   use: {
     baseURL: appConfig.webBaseUrl,
-    screenshot: 'off',
+    screenshot: 'only-on-failure',
     trace: 'off',
     video: 'off',
   },
   projects: [
     {
       name: 'api',
-      testMatch: '**/*.api.spec.ts',
+      testMatch: ['**/*.api.spec.ts', '**/api_tests.ts'],
     },
     {
       name: 'chromium',
-      testMatch: '**/*.ui.spec.ts',
+      testMatch: ['**/*.ui.spec.ts', '**/ui_tests.ts'],
       use: {
         ...devices['Desktop Chrome'],
       },

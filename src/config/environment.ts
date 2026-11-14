@@ -9,6 +9,7 @@ export interface AppConfig {
   webBaseUrl: string;
   apiBaseUrl: string;
   testIdentity?: TestIdentity;
+  testIdentityB?: TestIdentity;
 }
 
 const defaultWebBaseUrl = 'https://eventhub.rahulshettyacademy.com';
@@ -37,19 +38,34 @@ function readBaseUrl(name: string, value: string | undefined, fallback: string):
 export function loadAppConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): AppConfig {
-  const email = env.TEST_USER_EMAIL?.trim() || undefined;
-  const password = env.TEST_USER_PASSWORD || undefined;
+  const useNamedAccountA = Boolean(
+    env.TEST_USER_EMAIL_A?.trim() || env.TEST_USER_PASSWORD_A,
+  );
+  const emailA = useNamedAccountA
+    ? env.TEST_USER_EMAIL_A?.trim() || undefined
+    : env.TEST_USER_EMAIL?.trim() || undefined;
+  const passwordA = useNamedAccountA
+    ? env.TEST_USER_PASSWORD_A || undefined
+    : env.TEST_USER_PASSWORD || undefined;
+  const emailB = env.TEST_USER_EMAIL_B?.trim() || undefined;
+  const passwordB = env.TEST_USER_PASSWORD_B || undefined;
 
-  if (Boolean(email) !== Boolean(password)) {
+  if (Boolean(emailA) !== Boolean(passwordA)) {
     throw new Error(
-      'Set both TEST_USER_EMAIL and TEST_USER_PASSWORD, or leave both unset.',
+      'Set both TEST_USER_EMAIL_A and TEST_USER_PASSWORD_A, or leave both unset.',
+    );
+  }
+  if (Boolean(emailB) !== Boolean(passwordB)) {
+    throw new Error(
+      'Set both TEST_USER_EMAIL_B and TEST_USER_PASSWORD_B, or leave both unset.',
     );
   }
 
   return {
     webBaseUrl: readBaseUrl('WEB_BASE_URL', env.WEB_BASE_URL, defaultWebBaseUrl),
     apiBaseUrl: readBaseUrl('API_BASE_URL', env.API_BASE_URL, defaultApiBaseUrl),
-    ...(email && password ? { testIdentity: { email, password } } : {}),
+    ...(emailA && passwordA ? { testIdentity: { email: emailA, password: passwordA } } : {}),
+    ...(emailB && passwordB ? { testIdentityB: { email: emailB, password: passwordB } } : {}),
   };
 }
 
@@ -58,7 +74,7 @@ export const appConfig = loadAppConfig();
 export function requireTestIdentity(config: AppConfig = appConfig): TestIdentity {
   if (!config.testIdentity) {
     throw new Error(
-      'Authenticated smoke tests require TEST_USER_EMAIL and TEST_USER_PASSWORD from a dedicated test account.',
+      'Authenticated tests require TEST_USER_EMAIL_A and TEST_USER_PASSWORD_A from a dedicated test account.',
     );
   }
 

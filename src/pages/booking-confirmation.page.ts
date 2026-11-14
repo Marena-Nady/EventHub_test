@@ -8,7 +8,10 @@ export class BookingConfirmationPage {
     this.heading = page.getByRole('heading', {
       name: /booking confirmed/i,
     });
-    this.bookingDetails = page.getByText('Booking Ref', { exact: true }).locator('..');
+    this.bookingDetails = page
+      .getByText('Booking Ref', { exact: true })
+      .locator('..')
+      .locator('..');
   }
 
   totalAmount(amount: string): Locator {
