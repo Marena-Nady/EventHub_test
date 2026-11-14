@@ -12,11 +12,12 @@ export interface AppConfig {
   testIdentityB?: TestIdentity;
 }
 
-const defaultWebBaseUrl = 'https://eventhub.rahulshettyacademy.com';
-const defaultApiBaseUrl = 'https://api.eventhub.rahulshettyacademy.com/api';
+function readBaseUrl(name: string, value: string | undefined): string {
+  const rawUrl = value?.trim();
+  if (!rawUrl) {
+    throw new Error(`${name} is required and must be an absolute HTTP or HTTPS URL.`);
+  }
 
-function readBaseUrl(name: string, value: string | undefined, fallback: string): string {
-  const rawUrl = value?.trim() || fallback;
   let url: URL;
 
   try {
@@ -62,8 +63,8 @@ export function loadAppConfig(
   }
 
   return {
-    webBaseUrl: readBaseUrl('WEB_BASE_URL', env.WEB_BASE_URL, defaultWebBaseUrl),
-    apiBaseUrl: readBaseUrl('API_BASE_URL', env.API_BASE_URL, defaultApiBaseUrl),
+    webBaseUrl: readBaseUrl('WEB_BASE_URL', env.WEB_BASE_URL),
+    apiBaseUrl: readBaseUrl('API_BASE_URL', env.API_BASE_URL),
     ...(emailA && passwordA ? { testIdentity: { email: emailA, password: passwordA } } : {}),
     ...(emailB && passwordB ? { testIdentityB: { email: emailB, password: passwordB } } : {}),
   };

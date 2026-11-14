@@ -14,8 +14,8 @@ jobs:
     timeout-minutes: 45
     env:
       CI: 'true'
-      WEB_BASE_URL: ${{ vars.WEB_BASE_URL || 'https://eventhub.rahulshettyacademy.com' }}
-      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://api.eventhub.rahulshettyacademy.com/api' }}
+      WEB_BASE_URL: ${{ vars.WEB_BASE_URL }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
       TEST_USER_EMAIL_A: ${{ secrets.TEST_USER_EMAIL_A }}
       TEST_USER_PASSWORD_A: ${{ secrets.TEST_USER_PASSWORD_A }}
       TEST_USER_EMAIL_B: ${{ secrets.TEST_USER_EMAIL_B }}
@@ -43,9 +43,14 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Validate account secrets
+      - name: Validate URLs and account secrets
         shell: bash
         run: |
+          if [[ -z "${WEB_BASE_URL:-}" || -z "${API_BASE_URL:-}" ]]; then
+            echo "::error::Configure WEB_BASE_URL and API_BASE_URL as GitHub Actions Variables."
+            exit 1
+          fi
+
           if [[ -z "${TEST_USER_EMAIL_A:-}" || -z "${TEST_USER_PASSWORD_A:-}" ]]; then
             echo "::error::Configure TEST_USER_EMAIL_A and TEST_USER_PASSWORD_A as GitHub Actions secrets."
             exit 1
